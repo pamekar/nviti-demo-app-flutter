@@ -5,11 +5,11 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: demo_apps/nviti-demo-bank-flutter
+        working-directory: demo_apps/nviti-demo-app-flutter
     steps:
       - uses: actions/checkout@v4
         with:
-          path: demo_apps/nviti-demo-bank-flutter
+          path: demo_apps/nviti-demo-app-flutter
       - uses: actions/checkout@v4
         with:
           repository: pamekar/nviti-chat-flutter

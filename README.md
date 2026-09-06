@@ -1,13 +1,31 @@
-# Nviti Demo Bank — Flutter
+# Nviti Demo App — Flutter
 
-An open-source sample bank app showing how to launch Nviti Chat from Flutter.
+Nviti Explorer demonstrates the Nviti Chat SDK across banking, health insurance,
+logistics, diagnostics, property and hospitality. Dashboards fetch public data
+from live `*-demo.nvt.ng` APIs and include contextual shortcuts, a circular
+bottom-right chat launcher and a dismissible native invitation.
 
-The repository uses the sibling SDK checkout during development. Once the SDK repository is published, replace the path dependency with its public Git URL or pub.dev version.
+## Local development
 
-```bash
-flutter pub get
-flutter test
-flutter build apk --debug --dart-define=NVITI_CHAT_URL=https://your-tenant.nvt.ng/chat/WIDGET_HASH?webview=1
+Keep these sibling directories:
+```text
+demo_apps/nviti-demo-app-flutter/
+sdks/nviti-chat-flutter/
 ```
 
-Production apps should request a short-lived `webview_launch_url` from their backend and pass it to the chat screen at runtime. Never embed an Nviti API token in a mobile app.
+SDK publication is still pending. This repository alone is not yet a
+self-contained clean-clone build; CI expects `pamekar/nviti-chat-flutter`
+to be available. Do not assume the SDK is on a package registry.
+
+Run `flutter pub get`, `flutter analyze`, `flutter test`, then `flutter build apk --release --split-per-abi`.
+
+## Demo boundaries
+
+Account cards show an unconnected state, not invented balances or private
+records. Shortcuts explain services and open the assistant; they do not execute
+real transactions. Private account operations require server-verified identity.
+Never embed API credentials in a mobile app.
+
+Version 1.2.0 retains legacy application/package identifiers for in-place APK
+updates. Repository names are industry-neutral; internal identifiers remain
+for compatibility. Demo signing keys are not suitable for production releases.
