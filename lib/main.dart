@@ -1,277 +1,230 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:nviti_chat/nviti_chat.dart';
 
-const _navy = Color(0xFF123C69);
-const _orange = Color(0xFFEE542F);
+typedef DemoLoader = Future<Map<String, dynamic>> Function(String url);
+Future<Map<String, dynamic>> fetchDemo(String url) async {
+  final uri = Uri.parse(url);
+  if (uri.scheme != 'https' ||
+      !RegExp(r'^[a-z]+-demo\.nvt\.ng$').hasMatch(uri.host)) {
+    throw const FormatException('Untrusted demo endpoint');
+  }
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
+  try {
+    final request = await client.getUrl(uri);
+    request.followRedirects = false;
+    final response = await request.close().timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw const HttpException('Demo unavailable');
+    }
+    return jsonDecode(
+          await response
+              .transform(utf8.decoder)
+              .join()
+              .timeout(const Duration(seconds: 15)),
+        )
+        as Map<String, dynamic>;
+  } finally {
+    client.close(force: true);
+  }
+}
 
 void main() => runApp(const DemoBankApp());
 
 class DemoBankApp extends StatelessWidget {
-  const DemoBankApp({super.key});
-
+  const DemoBankApp({super.key, this.loader = fetchDemo});
+  final DemoLoader loader;
   @override
   Widget build(BuildContext context) => MaterialApp(
+    title: 'Nviti Explorer',
     debugShowCheckedModeBanner: false,
-    title: 'Nviti Demo Bank',
     theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: _navy),
-      scaffoldBackgroundColor: const Color(0xFFF4F7FB),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF123C69)),
       useMaterial3: true,
     ),
-    home: const BankHomePage(),
+    home: DemoPage(loader: loader),
   );
 }
 
-class BankHomePage extends StatelessWidget {
-  const BankHomePage({super.key});
+class DemoPage extends StatefulWidget {
+  const DemoPage({
+    super.key,
+    required this.loader,
+    this.url = 'https://banking-demo.nvt.ng/api/v1/mobile/use-cases',
+  });
+  final DemoLoader loader;
+  final String url;
+  @override
+  State<DemoPage> createState() => _DemoPageState();
+}
 
+class _DemoPageState extends State<DemoPage> {
+  late Future<Map<String, dynamic>> data;
+  @override
+  void initState() {
+    super.initState();
+    data = widget.loader(widget.url);
+  }
+
+  void reload() => setState(() {
+    data = widget.loader(widget.url);
+  });
+  Widget button(String title, VoidCallback action) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: FilledButton.tonal(
+      onPressed: action,
+      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+      child: Text(title),
+    ),
+  );
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(22, 18, 22, 110),
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 24,
-                backgroundColor: _navy,
-                child: Text(
-                  'NB',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Good evening, Ada',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                    Text(
-                      'Nviti Demo Bank',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: _navy,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_none_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: 26),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_navy, Color(0xFF23659B)],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33123C69),
-                  blurRadius: 22,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'AVAILABLE BALANCE',
-                  style: TextStyle(
-                    color: Color(0xFFBFD7EA),
-                    fontSize: 11,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '₦1,248,650.00',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 29,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Savings • 2408',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    Text(
-                      'DEMO ACCOUNT',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Quick actions',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF14213D),
-            ),
-          ),
-          const SizedBox(height: 14),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _QuickAction(icon: Icons.arrow_upward_rounded, label: 'Send'),
-              _QuickAction(
-                icon: Icons.arrow_downward_rounded,
-                label: 'Receive',
-              ),
-              _QuickAction(icon: Icons.receipt_long_outlined, label: 'Bills'),
-              _QuickAction(icon: Icons.more_horiz_rounded, label: 'More'),
-            ],
-          ),
-          const SizedBox(height: 30),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Color(0xFFFFECE6),
-                  child: Icon(Icons.auto_awesome, color: _orange),
-                ),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Meet Nia',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF14213D),
-                        ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Your conversational banking assistant',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-    floatingActionButton: FloatingActionButton.extended(
-      key: const Key('open-chat'),
-      onPressed: () => Navigator.of(
-        context,
-      ).push(MaterialPageRoute<void>(builder: (_) => const ChatPage())),
-      backgroundColor: _orange,
-      foregroundColor: Colors.white,
-      icon: const Icon(Icons.chat_bubble_outline_rounded),
-      label: const Text(
-        'Chat with Nia',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-    ),
-  );
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+    appBar: AppBar(
+      title: const Text('Nviti Explorer'),
+      actions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: reload,
+          icon: const Icon(Icons.refresh),
         ),
-        child: Icon(icon, color: _navy),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    ],
+      ],
+    ),
+    body: FutureBuilder<Map<String, dynamic>>(
+      future: data,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Unable to load demo. Check your connection.'),
+                button('Retry', reload),
+              ],
+            ),
+          );
+        }
+        final payload = snapshot.requireData;
+        if (payload.containsKey('use_cases')) {
+          return ListView(
+            padding: const EdgeInsets.all(22),
+            children: [
+              Text(
+                'Choose your experience',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'One app. Different industries. Explore the Nviti assistants.',
+                ),
+              ),
+              for (final item in payload['use_cases'] as List)
+                button(
+                  item['title'] as String,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => DemoPage(
+                        loader: widget.loader,
+                        url: item['dashboard_url'] as String,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }
+        return ListView(
+          padding: const EdgeInsets.all(22),
+          children: [
+            Text(
+              payload['title'] as String,
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(payload['notice'] as String),
+            ),
+            for (final metric in payload['metrics'] as List)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    '${metric['value']}  ${metric['label']}',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+              ),
+            for (final action in payload['actions'] as List)
+              button(
+                action['title'] as String,
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: Text(action['title'] as String)),
+                      body: ListView(
+                        padding: const EdgeInsets.all(22),
+                        children: [
+                          if ((action['items'] as List).isEmpty)
+                            const Text('No items available yet.'),
+                          for (final item in action['items'] as List)
+                            ListTile(title: Text(item as String)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (payload['chat_url'] is String)
+              button('Chat with ${payload['title']} assistant', () {
+                final uri = Uri.parse(payload['chat_url'] as String);
+                if (uri.scheme != 'https' || !uri.host.endsWith('.nvt.ng')) {
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(builder: (_) => ChatPage(uri: uri)),
+                );
+              })
+            else
+              const Text('Chat is not configured for this experience yet.'),
+          ],
+        );
+      },
+    ),
   );
 }
 
 class ChatPage extends StatelessWidget {
-  const ChatPage({super.key});
-
-  static const launchUrl = String.fromEnvironment(
-    'NVITI_CHAT_URL',
-    defaultValue: 'https://nviti-demo-bank.nvt.ng/chat/YG7gY2xN?webview=1',
-  );
-
+  const ChatPage({super.key, required this.uri});
+  final Uri uri;
   @override
-  Widget build(BuildContext context) {
-    final uri = Uri.parse(launchUrl);
-    final origin = Uri(
-      scheme: uri.scheme,
-      host: uri.host,
-      port: uri.hasPort ? uri.port : null,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Nia • Nviti Demo Bank',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: Colors.white,
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      title: TextButton.icon(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(Icons.close),
+        label: const Text('Close chat'),
       ),
-      body: NvitiChat(
-        config: NvitiChatConfig(
-          launchUrl: uri,
-          allowedOrigin: origin,
-          allowedActions: const {
-            NvitiNativeAction.close,
-          },
-        ),
-        onNativeAction: (request) async {
-          if (request.action == NvitiNativeAction.close && context.mounted) {
-            Navigator.of(context).pop();
-          }
-          return <String, Object?>{'handled': true};
-        },
+    ),
+    body: NvitiChat(
+      config: NvitiChatConfig(
+        launchUrl: uri,
+        allowedOrigin: Uri.parse(uri.origin),
+        allowedActions: const {NvitiNativeAction.close},
       ),
-    );
-  }
+      onNativeAction: (request) async {
+        if (request.action == NvitiNativeAction.close && context.mounted) {
+          Navigator.pop(context);
+        }
+        return <String, Object?>{'handled': true};
+      },
+    ),
+  );
 }
