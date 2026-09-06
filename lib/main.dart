@@ -155,8 +155,9 @@ class _DemoPageState extends State<DemoPage> {
           final uri = Uri.tryParse(payload['chat_url'] as String? ?? '');
           if (uri == null ||
               uri.scheme != 'https' ||
-              !uri.host.endsWith('.nvt.ng'))
+              !uri.host.endsWith('.nvt.ng')) {
             return;
+          }
           setState(() => invitationDismissed = true);
           Navigator.push(
             context,
