@@ -262,8 +262,6 @@ class ChatPage extends StatelessWidget {
           launchUrl: uri,
           allowedOrigin: origin,
           allowedActions: const {
-            NvitiNativeAction.camera,
-            NvitiNativeAction.file,
             NvitiNativeAction.close,
           },
         ),
