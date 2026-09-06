@@ -238,7 +238,7 @@ class ChatPage extends StatelessWidget {
 
   static const launchUrl = String.fromEnvironment(
     'NVITI_CHAT_URL',
-    defaultValue: 'https://nviti-demo-bank.nvt.ng/chat/configure-me?webview=1',
+    defaultValue: 'https://nviti-demo-bank.nvt.ng/chat/YG7gY2xN?webview=1',
   );
 
   @override
