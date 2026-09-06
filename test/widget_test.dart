@@ -19,6 +19,7 @@ void main() {
                 ],
               }
             : {
+                'id': 'hmo',
                 'title': 'Health insurance',
                 'notice': 'DEMO EXPERIENCE',
                 'metrics': [
@@ -37,12 +38,13 @@ void main() {
     await tester.tap(find.text('Health insurance'));
     await tester.pumpAndSettle();
     expect(find.text('2  Plans'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Browse plans'), 200);
     await tester.tap(find.text('Browse plans'));
     await tester.pumpAndSettle();
     expect(find.text('Silver plan'), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.text('DEMO EXPERIENCE'), findsOneWidget);
+    expect(find.text('Browse plans'), findsOneWidget);
   });
   testWidgets('failed dashboard fetch has a working retry', (tester) async {
     var calls = 0;
