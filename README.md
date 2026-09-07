@@ -13,9 +13,10 @@ demo_apps/nviti-demo-app-flutter/
 sdks/nviti-chat-flutter/
 ```
 
-SDK publication is still pending. This repository alone is not yet a
-self-contained clean-clone build; CI expects `pamekar/nviti-chat-flutter`
-to be available. Do not assume the SDK is on a package registry.
+The [SDK source](https://github.com/pamekar/nviti-chat-flutter) and its
+integration guide are public. Clone both repositories in the layout above;
+CI checks out the matching SDK automatically. Package-registry publication
+is separate; do not assume Maven/npm/pub.dev coordinates are available.
 
 Run `flutter pub get`, `flutter analyze`, `flutter test`, then `flutter build apk --release --split-per-abi`.
 
